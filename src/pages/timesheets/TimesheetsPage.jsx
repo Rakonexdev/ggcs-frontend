@@ -1,7 +1,33 @@
-import { useState, useEffect } from 'react';
-import { Plus, Clock, X } from 'lucide-react';
+import { useState, useEffect, forwardRef } from 'react';
+import { Plus, Clock, X, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { timesheetsApi, projectsApi } from '../../api';
 import { formatCurrency, formatDate } from '../../utils/helpers';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import CustomSelect from '../../components/common/CustomSelect';
+
+// ── Custom Datepicker Input ─────────────────────────────────────────────────
+const DatePickerInput = forwardRef(({ value, onClick, placeholder }, ref) => (
+  <button
+    type="button"
+    className="form-input"
+    onClick={onClick}
+    ref={ref}
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      cursor: 'pointer',
+      textAlign: 'left',
+      width: '100%',
+      color: value ? 'var(--text-primary)' : 'var(--text-muted)',
+    }}
+  >
+    <span>{value || placeholder || 'Select date'}</span>
+    <Calendar size={16} style={{ opacity: 0.6 }} />
+  </button>
+));
+
 
 export default function TimesheetsPage() {
   const [timesheets, setTimesheets] = useState([]);
@@ -21,6 +47,14 @@ export default function TimesheetsPage() {
     } catch {}
     setLoading(false);
   };
+
+  // Parse date string to Date object
+  const parseDate = (dateStr) => {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setError('');
@@ -87,12 +121,144 @@ export default function TimesheetsPage() {
             </div>
             {error && <div className="login-error">{error}</div>}
             <form onSubmit={handleSubmit}>
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Date From</label>
+                  <DatePicker
+                    selected={parseDate(form.date_from)}
+                    onChange={(date) => {
+                      if (date) {
+                        const yyyy = date.getFullYear();
+                        const mm = String(date.getMonth() + 1).padStart(2, '0');
+                        const dd = String(date.getDate()).padStart(2, '0');
+                        setForm({ ...form, date_from: `${yyyy}-${mm}-${dd}` });
+                      } else {
+                        setForm({ ...form, date_from: '' });
+                      }
+                    }}
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="Select start date"
+                    customInput={<DatePickerInput />}
+                    popperPlacement="bottom-start"
+                    showMonthDropdown
+                    showYearDropdown
+                    dropdownMode="select"
+                    renderCustomHeader={({
+                      date,
+                      changeYear,
+                      changeMonth,
+                      decreaseMonth,
+                      increaseMonth,
+                      prevMonthButtonDisabled,
+                      nextMonthButtonDisabled,
+                    }) => (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px' }}>
+                        <button type="button" onClick={decreaseMonth} disabled={prevMonthButtonDisabled}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', padding: '4px' }}>
+                          <ChevronLeft size={18} />
+                        </button>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <select
+                            value={date.getMonth()}
+                            onChange={({ target: { value } }) => changeMonth(Number(value))}
+                            style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: '4px', padding: '2px 6px', fontSize: '13px' }}
+                          >
+                            {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map((m, i) => (
+                              <option key={m} value={i}>{m}</option>
+                            ))}
+                          </select>
+                          <select
+                            value={date.getFullYear()}
+                            onChange={({ target: { value } }) => changeYear(Number(value))}
+                            style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: '4px', padding: '2px 6px', fontSize: '13px' }}
+                          >
+                            {Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - 5 + i).map(y => (
+                              <option key={y} value={y}>{y}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <button type="button" onClick={increaseMonth} disabled={nextMonthButtonDisabled}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', padding: '4px' }}>
+                          <ChevronRight size={18} />
+                        </button>
+                      </div>
+                    )}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Date To</label>
+                  <DatePicker
+                    selected={parseDate(form.date_to)}
+                    onChange={(date) => {
+                      if (date) {
+                        const yyyy = date.getFullYear();
+                        const mm = String(date.getMonth() + 1).padStart(2, '0');
+                        const dd = String(date.getDate()).padStart(2, '0');
+                        setForm({ ...form, date_to: `${yyyy}-${mm}-${dd}` });
+                      } else {
+                        setForm({ ...form, date_to: '' });
+                      }
+                    }}
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="Select end date"
+                    customInput={<DatePickerInput />}
+                    popperPlacement="bottom-start"
+                    showMonthDropdown
+                    showYearDropdown
+                    dropdownMode="select"
+                    renderCustomHeader={({
+                      date,
+                      changeYear,
+                      changeMonth,
+                      decreaseMonth,
+                      increaseMonth,
+                      prevMonthButtonDisabled,
+                      nextMonthButtonDisabled,
+                    }) => (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px' }}>
+                        <button type="button" onClick={decreaseMonth} disabled={prevMonthButtonDisabled}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', padding: '4px' }}>
+                          <ChevronLeft size={18} />
+                        </button>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <select
+                            value={date.getMonth()}
+                            onChange={({ target: { value } }) => changeMonth(Number(value))}
+                            style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: '4px', padding: '2px 6px', fontSize: '13px' }}
+                          >
+                            {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map((m, i) => (
+                              <option key={m} value={i}>{m}</option>
+                            ))}
+                          </select>
+                          <select
+                            value={date.getFullYear()}
+                            onChange={({ target: { value } }) => changeYear(Number(value))}
+                            style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: '4px', padding: '2px 6px', fontSize: '13px' }}
+                          >
+                            {Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - 5 + i).map(y => (
+                              <option key={y} value={y}>{y}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <button type="button" onClick={increaseMonth} disabled={nextMonthButtonDisabled}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', padding: '4px' }}>
+                          <ChevronRight size={18} />
+                        </button>
+                      </div>
+                    )}
+                  />
+                </div>
+              </div>
+
               <div className="form-group">
                 <label className="form-label">Project</label>
-                <select className="form-select" value={form.project_id} onChange={(e) => setForm({ ...form, project_id: e.target.value })} required>
-                  <option value="">Select project</option>
-                  {projects.map((p) => <option key={p.id} value={p.id}>{p.project_code} – {p.person?.name}</option>)}
-                </select>
+                <CustomSelect
+                  options={projects.map(p => ({ id: p.id, name: `${p.project_code} – ${p.person?.name}` }))}
+                  value={form.project_id}
+                  onChange={(val) => setForm({ ...form, project_id: val })}
+                  placeholder="Select project"
+                  isSearchable={true}
+                />
               </div>
               <div className="form-group">
                 <label className="form-label">Profession Name</label>
@@ -106,16 +272,6 @@ export default function TimesheetsPage() {
                 <div className="form-group">
                   <label className="form-label">Total Hours</label>
                   <input type="number" step="0.5" className="form-input" value={form.total_hours} onChange={(e) => setForm({ ...form, total_hours: e.target.value })} required />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Date From</label>
-                  <input type="date" className="form-input" value={form.date_from} onChange={(e) => setForm({ ...form, date_from: e.target.value })} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Date To</label>
-                  <input type="date" className="form-input" value={form.date_to} onChange={(e) => setForm({ ...form, date_to: e.target.value })} />
                 </div>
               </div>
               {form.rate_per_hour && form.total_hours && (

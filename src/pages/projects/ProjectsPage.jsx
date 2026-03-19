@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { projectsApi, personsApi } from '../../api';
 import { formatCurrency, statusColor } from '../../utils/helpers';
-import { Plus, Folder, X } from 'lucide-react';
+import { Plus, Folder, X, AlertCircle } from 'lucide-react';
+import CustomSelect from '../../components/common/CustomSelect';
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState([]);
@@ -11,6 +12,7 @@ export default function ProjectsPage() {
   const [form, setForm] = useState({ person_id: '', type: 'fixed', fixed_total_amount: '', fixed_description: '', invoice_interval_days: '' });
   const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
 
   useEffect(() => { loadData(); }, []);
 
@@ -40,11 +42,42 @@ export default function ProjectsPage() {
     }
   };
 
-  const updateStatus = async (id, status) => {
-    try {
-      await projectsApi.updateStatus(id, { status });
-      loadData();
-    } catch {}
+  const updateStatus = (id, status) => {
+    const project = projects.find(p => p.id === id);
+    const config = {
+      active: {
+        title: project?.status === 'on_hold' ? 'Resume Project' : 'Activate Project',
+        message: project?.status === 'on_hold' 
+          ? `Are you sure you want to resume "${project.project_code}"? It will be marked as active.`
+          : `Are you sure you want to activate "${project.project_code}"?`,
+      },
+      on_hold: {
+        title: 'Put on Hold',
+        message: `Are you sure you want to put "${project?.project_code}" on hold? This will pause all related activities.`,
+      },
+      completed: {
+        title: 'Mark as Completed',
+        message: `Are you sure you want to mark "${project?.project_code}" as completed? This action should only be taken if all work is finished.`,
+      },
+    };
+
+    const { title, message } = config[status] || { title: 'Change Status', message: 'Are you sure you want to change the status?' };
+
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: async () => {
+        try {
+          await projectsApi.updateStatus(id, { status });
+          loadData();
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        } catch (err) {
+          setError(err.response?.data?.message || 'Error updating status');
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
   };
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>;
@@ -59,14 +92,21 @@ export default function ProjectsPage() {
       </div>
 
       <div className="filter-bar">
-        <select className="form-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          <option value="">All Statuses</option>
-          <option value="draft">Draft</option>
-          <option value="active">Active</option>
-          <option value="on_hold">On Hold</option>
-          <option value="completed">Completed</option>
-          <option value="withdrawn">Withdrawn</option>
-        </select>
+        <div style={{ width: '200px' }}>
+          <CustomSelect
+            options={[
+              { id: 'draft', name: 'Draft' },
+              { id: 'active', name: 'Active' },
+              { id: 'on_hold', name: 'On Hold' },
+              { id: 'completed', name: 'Completed' },
+              { id: 'withdrawn', name: 'Withdrawn' }
+            ]}
+            value={statusFilter}
+            onChange={setStatusFilter}
+            placeholder="All Statuses"
+            isSearchable={false}
+          />
+        </div>
       </div>
 
       <div className="card">
@@ -126,17 +166,25 @@ export default function ProjectsPage() {
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label className="form-label">Person</label>
-                <select className="form-select" value={form.person_id} onChange={(e) => setForm({ ...form, person_id: e.target.value })} required>
-                  <option value="">Select person</option>
-                  {persons.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.qatar_id})</option>)}
-                </select>
+                <CustomSelect
+                  options={persons.map(p => ({ id: p.id, name: `${p.name} (${p.qatar_id})` }))}
+                  value={form.person_id}
+                  onChange={(val) => setForm({ ...form, person_id: val })}
+                  placeholder="Select person"
+                  isSearchable={true}
+                />
               </div>
               <div className="form-group">
                 <label className="form-label">Project Type</label>
-                <select className="form-select" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-                  <option value="fixed">Fixed Amount</option>
-                  <option value="variable">Variable (Hourly)</option>
-                </select>
+                <CustomSelect
+                  options={[
+                    { id: 'fixed', name: 'Fixed Amount' },
+                    { id: 'variable', name: 'Variable (Hourly)' }
+                  ]}
+                  value={form.type}
+                  onChange={(val) => setForm({ ...form, type: val })}
+                  isSearchable={false}
+                />
               </div>
               {form.type === 'fixed' && (
                 <>
@@ -159,6 +207,32 @@ export default function ProjectsPage() {
                 <button type="submit" className="btn btn-primary">Create</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Confirm Modal */}
+      {confirmModal.isOpen && (
+        <div className="confirm-modal-overlay" onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}>
+          <div className="confirm-modal" onClick={e => e.stopPropagation()}>
+            <div className="confirm-modal-icon">
+              <AlertCircle size={32} />
+            </div>
+            <h3 className="confirm-modal-title">{confirmModal.title}</h3>
+            <p className="confirm-modal-text">{confirmModal.message}</p>
+            <div className="confirm-modal-actions">
+              <button 
+                className="confirm-modal-btn confirm-modal-btn-secondary" 
+                onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+              >
+                Cancel
+              </button>
+              <button 
+                className="confirm-modal-btn confirm-modal-btn-primary" 
+                onClick={confirmModal.onConfirm}
+              >
+                Confirm
+              </button>
+            </div>
           </div>
         </div>
       )}

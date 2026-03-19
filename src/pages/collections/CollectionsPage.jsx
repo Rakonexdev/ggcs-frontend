@@ -3,6 +3,7 @@ import { Plus, DollarSign, X, CheckCircle } from 'lucide-react';
 import { collectionsApi, invoicesApi } from '../../api';
 import { formatCurrency, formatDate } from '../../utils/helpers';
 import { useAuth } from '../../contexts/AuthContext';
+import CustomSelect from '../../components/common/CustomSelect';
 
 export default function CollectionsPage() {
   const [collections, setCollections] = useState([]);
@@ -108,14 +109,13 @@ export default function CollectionsPage() {
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label className="form-label">Invoice</label>
-                <select className="form-select" value={form.invoice_id} onChange={(e) => setForm({ ...form, invoice_id: e.target.value })} required>
-                  <option value="">Select invoice</option>
-                  {invoices.map((inv) => (
-                    <option key={inv.id} value={inv.id}>
-                      {inv.invoice_code} – Outstanding: {formatCurrency(inv.outstanding_amount)}
-                    </option>
-                  ))}
-                </select>
+                <CustomSelect
+                  options={invoices.map(inv => ({ id: inv.id, name: `${inv.invoice_code} – Outstanding: ${formatCurrency(inv.outstanding_amount)}` }))}
+                  value={form.invoice_id}
+                  onChange={(val) => setForm({ ...form, invoice_id: val })}
+                  placeholder="Select invoice"
+                  isSearchable={true}
+                />
               </div>
               <div className="form-row">
                 <div className="form-group">
@@ -129,10 +129,15 @@ export default function CollectionsPage() {
               </div>
               <div className="form-group">
                 <label className="form-label">Method</label>
-                <select className="form-select" value={form.method} onChange={(e) => setForm({ ...form, method: e.target.value })}>
-                  <option value="cash">Cash</option>
-                  <option value="bank_transfer">Bank Transfer</option>
-                </select>
+                <CustomSelect
+                  options={[
+                    { id: 'cash', name: 'Cash' },
+                    { id: 'bank_transfer', name: 'Bank Transfer' }
+                  ]}
+                  value={form.method}
+                  onChange={(val) => setForm({ ...form, method: val })}
+                  isSearchable={false}
+                />
               </div>
               <div className="form-group">
                 <label className="form-label">Notes</label>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, FileText, X } from 'lucide-react';
 import { invoicesApi, projectsApi } from '../../api';
 import { formatCurrency, formatDate } from '../../utils/helpers';
+import CustomSelect from '../../components/common/CustomSelect';
 
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState([]);
@@ -96,10 +97,13 @@ export default function InvoicesPage() {
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label className="form-label">Project</label>
-                <select className="form-select" value={form.project_id} onChange={(e) => setForm({ ...form, project_id: e.target.value })} required>
-                  <option value="">Select project</option>
-                  {projects.map((p) => <option key={p.id} value={p.id}>{p.project_code} – {p.person?.name}</option>)}
-                </select>
+                <CustomSelect
+                  options={projects.map(p => ({ id: p.id, name: `${p.project_code} – ${p.person?.name}` }))}
+                  value={form.project_id}
+                  onChange={(val) => setForm({ ...form, project_id: val })}
+                  placeholder="Select project"
+                  isSearchable={true}
+                />
               </div>
               <div className="form-group">
                 <label className="form-label">Total Amount (QAR)</label>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { usersApi, rolesApi } from '../../api';
 import { Pencil, Lock, Unlock, X, Plus } from 'lucide-react';
+import CustomSelect from '../../components/common/CustomSelect';
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
@@ -137,10 +138,13 @@ export default function UsersPage() {
               </div>
               <div className="form-group">
                 <label className="form-label">Role</label>
-                <select className="form-select" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} required>
-                  <option value="">Select role</option>
-                  {roles.map((r) => <option key={r.id} value={r.name}>{r.name}</option>)}
-                </select>
+                <CustomSelect
+                  options={roles.map(r => ({ id: r.name, name: r.name }))}
+                  value={form.role}
+                  onChange={(val) => setForm({ ...form, role: val })}
+                  placeholder="Select role"
+                  isSearchable={false}
+                />
               </div>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>

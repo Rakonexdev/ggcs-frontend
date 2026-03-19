@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Wallet, Folder, X } from 'lucide-react';
 import { expensesApi, expenseCategoriesApi } from '../../api';
 import { formatCurrency, formatDate } from '../../utils/helpers';
+import CustomSelect from '../../components/common/CustomSelect';
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState([]);
@@ -145,10 +146,13 @@ export default function ExpensesPage() {
                 <>
                   <div className="form-group">
                     <label className="form-label">Category</label>
-                    <select className="form-select" value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} required>
-                      <option value="">Select category</option>
-                      {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
+                    <CustomSelect
+                      options={categories}
+                      value={form.category_id}
+                      onChange={(val) => setForm({ ...form, category_id: val })}
+                      placeholder="Select category"
+                      isSearchable={true}
+                    />
                   </div>
                   <div className="form-row">
                     <div className="form-group">
@@ -173,10 +177,13 @@ export default function ExpensesPage() {
                   </div>
                   <div className="form-group">
                     <label className="form-label">Parent Category (optional)</label>
-                    <select className="form-select" value={form.parent_id} onChange={(e) => setForm({ ...form, parent_id: e.target.value })}>
-                      <option value="">None (Head Category)</option>
-                      {headCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
+                    <CustomSelect
+                      options={headCategories}
+                      value={form.parent_id}
+                      onChange={(val) => setForm({ ...form, parent_id: val })}
+                      placeholder="None (Head Category)"
+                      isSearchable={false}
+                    />
                   </div>
                 </>
               )}

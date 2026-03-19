@@ -38,10 +38,10 @@ export default function PersonsPage() {
   const [form, setForm] = useState({ name: '', phone: '', qatar_id: '', id_expiration_date: '', company_id: '' });
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
-  const [companyFilter, setCompanyFilter] = useState(''); // Renamed from filterCompany
+  const [companyFilter, setCompanyFilter] = useState(''); 
   const [showFilters, setShowFilters] = useState(false);
 
-  useEffect(() => { loadData(); }, [search, companyFilter]); // Added companyFilter to dependency array
+  useEffect(() => { loadData(); }, [search, companyFilter]); 
 
   const loadData = async () => {
     setLoading(true);
@@ -86,19 +86,13 @@ export default function PersonsPage() {
     }
   };
 
-  // Direct company creation handler
   const handleCreateCompany = async (name) => {
     try {
       const { data } = await companiesApi.create({ name });
-      // The API returns { company: {id, name...}, similar_existing: [...] }
       let newCompany = data.company || data.data || data;
-      
-      // Ensure we have a valid object with an ID
       if (newCompany && typeof newCompany.id === 'undefined' && data.id) {
         newCompany = data;
       }
-
-      // If name is missing from the extracted object, use the name we sent
       if (newCompany && !newCompany.name) {
         newCompany = { ...newCompany, name: name };
       }
@@ -111,14 +105,12 @@ export default function PersonsPage() {
     }
   };
 
-  // Parse date string to Date object
   const parseDate = (dateStr) => {
     if (!dateStr) return null;
     const d = new Date(dateStr);
     return isNaN(d.getTime()) ? null : d;
   };
 
-  // Filter persons locally as a fallback
   const filteredPersons = companyFilter 
     ? persons.filter(p => String(p.company_id) === String(companyFilter))
     : persons;
@@ -160,9 +152,9 @@ export default function PersonsPage() {
 
       {/* Expandable Filter Panel */}
       {showFilters && (
-        <div className="card" style={{ padding: '20px', marginBottom: '20px', display: 'flex', gap: '16px', alignItems: 'flex-end' }}>
-          <div style={{ flex: 1 }}>
-            <label className="form-label">Company</label>
+        <div className="card" style={{ padding: '20px', marginBottom: '20px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <div style={{ minWidth: '240px' }}>
+            <label className="form-label" style={{ textAlign: 'left' }}>Company</label>
             <CustomSelect
               options={companies}
               value={companyFilter}
@@ -174,7 +166,7 @@ export default function PersonsPage() {
           <button
             className="btn btn-secondary"
             onClick={() => { setCompanyFilter(''); setSearch(''); }}
-            style={{ height: '42px' }}
+            style={{ height: '42px', marginLeft: 'auto' }}
           >
             Clear Filters
           </button>

@@ -105,11 +105,12 @@ export default function CustomSelect({
       {/* Dropdown */}
       {isOpen && (
         <div style={{
-          position: 'fixed',
+          position: 'absolute',
           zIndex: 10000,
-          width: ref.current?.offsetWidth || 300,
-          left: ref.current?.getBoundingClientRect().left || 0,
-          top: (ref.current?.getBoundingClientRect().bottom || 0) + 4,
+          width: '100%',
+          left: 0,
+          top: '100%',
+          marginTop: '4px',
           backgroundColor: 'var(--bg-secondary)',
           border: '1px solid var(--border)',
           borderRadius: '8px',

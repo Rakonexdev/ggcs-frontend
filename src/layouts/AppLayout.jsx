@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  LayoutDashboard, 
-  Building2, 
-  User, 
-  Files, 
-  Clock, 
-  FileText, 
-  BadgeDollarSign, 
-  Wallet, 
-  TrendingUp, 
-  Users, 
+import {
+  LayoutDashboard,
+  Building2,
+  User,
+  Files,
+  Clock,
+  FileText,
+  BadgeDollarSign,
+  Wallet,
+  TrendingUp,
+  Users,
   Settings,
   LogOut,
   Menu,
@@ -118,8 +118,8 @@ export default function AppLayout() {
 
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-logo">
-          <div className="logo-icon">GG</div>
-          <h1>GGCS</h1>
+          <div className="logo-icon">NRG</div>
+          <h1>GROUP</h1>
           {/* Close button visible only on mobile */}
           <button
             className="sidebar-close-btn"

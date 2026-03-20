@@ -28,8 +28,8 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-card animate-slide">
         <div className="logo-group">
-          <div className="logo-icon">GG</div>
-          <h1>GGCS</h1>
+          <div className="logo-icon">NRG</div>
+          <h1>GROUP</h1>
           <p>Contracting Operations Platform</p>
         </div>
 

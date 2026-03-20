@@ -41,3 +41,19 @@ export function statusColor(status) {
   };
   return colors[status] || '#94a3b8';
 }
+
+export function timeAgo(date) {
+  if (!date) return '—';
+  const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+  let interval = seconds / 31536000;
+  if (interval > 1) return Math.floor(interval) + ' years ago';
+  interval = seconds / 2592000;
+  if (interval > 1) return Math.floor(interval) + ' months ago';
+  interval = seconds / 86400;
+  if (interval > 1) return Math.floor(interval) + ' days ago';
+  interval = seconds / 3600;
+  if (interval > 1) return Math.floor(interval) + ' hours ago';
+  interval = seconds / 60;
+  if (interval > 1) return Math.floor(interval) + ' minute' + (Math.floor(interval) !== 1 ? 's' : '') + ' ago';
+  return Math.max(0, Math.floor(seconds)) + ' seconds ago';
+}

@@ -28,7 +28,7 @@ const navSections = [
   {
     title: 'CRM',
     items: [
-      { to: '/persons', icon: <User size={20} />, label: 'Persons' },
+      { to: '/customers', icon: <User size={20} />, label: 'Customers' },
     ],
   },
   {

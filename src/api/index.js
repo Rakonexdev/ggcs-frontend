@@ -137,6 +137,7 @@ export const expensesApi = {
 
 // Reports
 export const reportsApi = {
+  dashboardStats: () => api.get('/reports/dashboard-stats'),
   outstandingInvoices: (params) => api.get('/reports/outstanding-invoices', { params }),
   collectionsSummary: (params) => api.get('/reports/collections-summary', { params }),
   collectionsFeed: (params) => api.get('/reports/collections-feed', { params }),

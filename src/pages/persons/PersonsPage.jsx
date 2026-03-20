@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, forwardRef, useMemo } from 'react';
-import { personsApi, companiesApi } from '../../api';
+import { personsApi, companiesApi, uploadsApi } from '../../api';
 import { formatDate } from '../../utils/helpers';
-import { Plus, User, Phone, CreditCard, Calendar, Search, Edit2, Trash2, Pencil, SlidersHorizontal, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Plus, User, Phone, CreditCard, Calendar, Search, Edit2, Trash2, Pencil, SlidersHorizontal, ChevronLeft, ChevronRight, X, UploadCloud, File as FileIcon } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import CustomSelect from '../../components/common/CustomSelect';
@@ -35,11 +35,13 @@ export default function PersonsPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ name: '', phone: '', qatar_id: '', id_expiration_date: '', company_id: '' });
+  const [form, setForm] = useState({ name: '', phone: '', qatar_id: '', id_expiration_date: '', company_id: '', id_photo_url: '' });
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [companyFilter, setCompanyFilter] = useState(''); 
   const [showFilters, setShowFilters] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => { loadData(); }, [search, companyFilter]); 
 
@@ -61,8 +63,8 @@ export default function PersonsPage() {
   };
 
   const openCreate = () => {
-    setForm({ name: '', phone: '', qatar_id: '', id_expiration_date: '', company_id: '' });
-    setEditId(null); setError(''); setShowModal(true);
+    setForm({ name: '', phone: '', qatar_id: '', id_expiration_date: '', company_id: '', id_photo_url: '' });
+    setEditId(null); setError(''); setShowModal(true); setIsUploading(false); setIsDragging(false);
   };
 
   const openEdit = (p) => {
@@ -70,8 +72,55 @@ export default function PersonsPage() {
       name: p.name, phone: p.phone, qatar_id: p.qatar_id,
       id_expiration_date: p.id_expiration_date?.split('T')[0] || '',
       company_id: p.company_id || '',
+      id_photo_url: p.id_photo_url || '',
     });
-    setEditId(p.id); setError(''); setShowModal(true);
+    setEditId(p.id); setError(''); setShowModal(true); setIsUploading(false); setIsDragging(false);
+  };
+
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setError('File size must be less than 2MB');
+      return;
+    }
+
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Only PDF, JPG, and PNG files are supported');
+      return;
+    }
+
+    setError('');
+    setIsUploading(true);
+    try {
+      const res = await uploadsApi.idPhoto(file);
+      const url = res.data?.url || res.data?.path || res.data;
+      setForm((prev) => ({ ...prev, id_photo_url: url }));
+    } catch (err) {
+      console.error(err);
+      setError('Failed to upload file');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files[0]);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -120,10 +169,10 @@ export default function PersonsPage() {
   return (
     <div className="animate-fade">
       <div className="page-header">
-        <h2>Persons</h2>
+        <h2>Customers</h2>
         <button className="btn btn-primary" onClick={openCreate}>
           <Plus size={18} />
-          Add Person
+          Add Customer
         </button>
       </div>
 
@@ -177,7 +226,7 @@ export default function PersonsPage() {
         {filteredPersons.length === 0 ? (
           <div className="empty-state">
             <div className="icon"><User size={48} /></div>
-            <h3>No persons found</h3>
+            <h3>No customers found</h3>
           </div>
         ) : (
           <div className="data-table-wrap">
@@ -204,9 +253,9 @@ export default function PersonsPage() {
 
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal animate-slide" onClick={(e) => e.stopPropagation()} style={{ overflow: 'visible' }}>
+          <div className="modal animate-slide" onClick={(e) => e.stopPropagation()} style={{ overflow: 'visible', maxWidth: '600px' }}>
             <div className="modal-header">
-              <h3 className="modal-title">{editId ? 'Edit Person' : 'Add Person'}</h3>
+              <h3 className="modal-title">{editId ? 'Edit Customer' : 'Add Customer'}</h3>
               <button className="btn-icon" onClick={() => setShowModal(false)}>
                 <X size={20} />
               </button>
@@ -324,6 +373,105 @@ export default function PersonsPage() {
                     createLabel="Add Company"
                     placeholder="Search or add company..."
                   />
+                </div>
+              </div>
+              <div className="form-group" style={{ marginTop: '16px' }}>
+                <label className="form-label">ID Document (PDF, JPG, PNG - Max 2MB)</label>
+                <div 
+                  className={`dropzone ${isDragging ? 'dragging' : ''}`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => document.getElementById('id-upload').click()}
+                  style={{
+                    border: `2px dashed ${isDragging ? 'var(--primary)' : 'var(--border)'}`,
+                    borderRadius: '8px',
+                    padding: '24px',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    background: isDragging ? 'var(--bg-input)' : 'transparent',
+                    transition: 'all 0.2s ease',
+                    position: 'relative',
+                  }}
+                >
+                  <input 
+                    id="id-upload"
+                    type="file" 
+                    style={{ display: 'none' }} 
+                    accept="application/pdf,image/jpeg,image/png"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleFileUpload(e.target.files[0]);
+                      }
+                    }} 
+                  />
+                  {isUploading ? (
+                    <div className="spinner" style={{ margin: '0 auto' }} />
+                  ) : form.id_photo_url ? (
+                    <div 
+                      onClick={(e) => e.stopPropagation()} 
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between', 
+                        padding: '16px', 
+                        border: '1px solid var(--border)', 
+                        borderRadius: '6px', 
+                        backgroundColor: 'var(--bg-card)' 
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        {form.id_photo_url.match(/\.(jpeg|jpg|png|gif)$/i) ? (
+                          <img 
+                            src={form.id_photo_url.startsWith('http') ? form.id_photo_url : `http://localhost:8000/storage/${form.id_photo_url.replace('public/', '')}`} 
+                            alt="Document Preview" 
+                            style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border)' }} 
+                            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
+                          />
+                        ) : null}
+                        <FileIcon 
+                          size={32} 
+                          color="var(--primary)" 
+                          style={{ display: form.id_photo_url.match(/\.(jpeg|jpg|png|gif)$/i) ? 'none' : 'block' }} 
+                        />
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                          <span style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>
+                            ID Document Uploaded
+                          </span>
+                          <a 
+                            href={form.id_photo_url.startsWith('http') ? form.id_photo_url : `http://localhost:8000/storage/${form.id_photo_url.replace('public/', '')}`} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            style={{ fontSize: '12px', color: 'var(--accent)', textDecoration: 'underline' }}
+                          >
+                            View File
+                          </a>
+                        </div>
+                      </div>
+                      <button 
+                        type="button" 
+                        className="btn-icon" 
+                        style={{ color: 'var(--danger)' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setForm((prev) => ({ ...prev, id_photo_url: '' }));
+                        }}
+                        title="Remove file"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                      <UploadCloud size={32} color="var(--text-muted)" />
+                      <div style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
+                        <span style={{ fontWeight: '600', color: 'var(--primary)' }}>Click to upload</span> or drag and drop
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                        PDF, PNG, JPG up to 2MB
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>

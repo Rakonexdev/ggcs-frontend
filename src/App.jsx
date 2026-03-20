@@ -71,7 +71,7 @@ function AppRoutes() {
         <Route index element={<DashboardPage />} />
         <Route path="users" element={<UsersPage />} />
         <Route path="companies" element={<CompaniesPage />} />
-        <Route path="persons" element={<PersonsPage />} />
+        <Route path="customers" element={<PersonsPage />} />
         <Route path="projects" element={<ProjectsPage />} />
         <Route path="timesheets" element={<TimesheetsPage />} />
         <Route path="invoices" element={<InvoicesPage />} />
